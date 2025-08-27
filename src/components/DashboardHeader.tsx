@@ -5,7 +5,6 @@ import {
   Settings, 
   BarChart3, 
   Activity,
-  Zap,
   Monitor
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -19,11 +18,15 @@ export function DashboardHeader() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-primary rounded-lg shadow-glow">
-              <Zap className="w-6 h-6 text-white" />
+            <div className="p-2 bg-white rounded-lg shadow-glow">
+              <img 
+                src="/lovable-uploads/57ba805a-8067-402e-a68a-b01d47cf928b.png" 
+                alt="Qatalyst Logo" 
+                className="w-8 h-8"
+              />
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold text-foreground">
                 QatalystQ
               </h1>
               <p className="text-sm text-muted-foreground">
