@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DashboardHeader } from '@/components/DashboardHeader';
+import { ResponsiveDashboardLayout } from '@/components/ResponsiveDashboardLayout';
 import { KioskStatusCard } from '@/components/KioskStatusCard';
 import { QueueOverview } from '@/components/QueueOverview';
 import { SelfHealingLog } from '@/components/SelfHealingLog';
@@ -57,76 +57,94 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader />
-      
-      <main className="p-6">
-        <div className="flex items-center justify-between mb-6">
+    <ResponsiveDashboardLayout>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-foreground">System Overview</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground">System Overview</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Last updated: {lastRefresh.toLocaleTimeString()}
             </p>
           </div>
-          <Button onClick={handleRefresh} variant="outline" className="gap-2">
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline" 
+            className="gap-2 min-h-11 touch-manipulation w-full sm:w-auto"
+          >
             <RefreshCw className="w-4 h-4" />
-            Refresh Data
+            <span>Refresh Data</span>
           </Button>
         </div>
 
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
+        <Tabs defaultValue="overview" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto sm:h-10">
+            <TabsTrigger 
+              value="overview" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-3 sm:py-2 min-h-11 sm:min-h-0 text-xs sm:text-sm touch-manipulation"
+            >
               <Monitor className="w-4 h-4" />
-              Overview
+              <span className="hidden sm:inline">Overview</span>
+              <span className="sm:hidden">Home</span>
             </TabsTrigger>
-            <TabsTrigger value="queues" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="queues" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-3 sm:py-2 min-h-11 sm:min-h-0 text-xs sm:text-sm touch-manipulation"
+            >
               <Users className="w-4 h-4" />
-              Queue Management
+              <span className="hidden sm:inline">Queue Management</span>
+              <span className="sm:hidden">Queue</span>
             </TabsTrigger>
-            <TabsTrigger value="healing" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="healing" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-3 sm:py-2 min-h-11 sm:min-h-0 text-xs sm:text-sm touch-manipulation"
+            >
               <Activity className="w-4 h-4" />
-              Self-Healing
+              <span className="hidden sm:inline">Self-Healing</span>
+              <span className="sm:hidden">Health</span>
             </TabsTrigger>
-            <TabsTrigger value="ai" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="ai" 
+              className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-3 sm:py-2 min-h-11 sm:min-h-0 text-xs sm:text-sm touch-manipulation"
+            >
               <Brain className="w-4 h-4" />
-              AI Insights
+              <span className="hidden sm:inline">AI Insights</span>
+              <span className="sm:hidden">AI</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             <div>
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Monitor className="w-5 h-5 text-primary" />
-                Kiosk Status Monitor
+              <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 flex items-center gap-2">
+                <Monitor className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                <span className="text-sm sm:text-base">Kiosk Status Monitor</span>
               </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {kiosks.map((kiosk) => (
                   <KioskStatusCard key={kiosk.id} kiosk={kiosk} />
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
               <QueueOverview tickets={tickets} agents={agents} />
               <AIInsightsPanel />
             </div>
           </TabsContent>
 
-          <TabsContent value="queues" className="space-y-6">
+          <TabsContent value="queues" className="space-y-4 sm:space-y-6">
             <QueueOverview tickets={tickets} agents={agents} />
           </TabsContent>
 
-          <TabsContent value="healing" className="space-y-6">
+          <TabsContent value="healing" className="space-y-4 sm:space-y-6">
             <SelfHealingLog events={healthEvents} />
           </TabsContent>
 
-          <TabsContent value="ai" className="space-y-6">
+          <TabsContent value="ai" className="space-y-4 sm:space-y-6">
             <AIInsightsPanel />
           </TabsContent>
         </Tabs>
-      </main>
-    </div>
+      </div>
+    </ResponsiveDashboardLayout>
   );
 };
 

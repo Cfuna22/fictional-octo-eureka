@@ -49,51 +49,51 @@ export function QueueOverview({ tickets, agents }: QueueOverviewProps) {
   return (
     <div className="space-y-6">
       {/* Queue Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card className="bg-gradient-card border-border">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Waiting</p>
-                <p className="text-3xl font-bold text-warning">{waitingTickets.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Waiting</p>
+                <p className="text-xl sm:text-3xl font-bold text-warning">{waitingTickets.length}</p>
               </div>
-              <Users className="w-8 h-8 text-warning" />
+              <Users className="w-6 h-6 sm:w-8 sm:h-8 text-warning shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-card border-border">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">In Progress</p>
-                <p className="text-3xl font-bold text-primary">{inProgressTickets.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">In Progress</p>
+                <p className="text-xl sm:text-3xl font-bold text-primary">{inProgressTickets.length}</p>
               </div>
-              <UserCheck className="w-8 h-8 text-primary" />
+              <UserCheck className="w-6 h-6 sm:w-8 sm:h-8 text-primary shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-card border-border">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Avg Wait</p>
-                <p className="text-3xl font-bold text-foreground">{averageWaitTime}m</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Avg Wait</p>
+                <p className="text-xl sm:text-3xl font-bold text-foreground">{averageWaitTime}m</p>
               </div>
-              <Clock className="w-8 h-8 text-primary" />
+              <Clock className="w-6 h-6 sm:w-8 sm:h-8 text-primary shrink-0" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="bg-gradient-card border-border">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Available Agents</p>
-                <p className="text-3xl font-bold text-success">{availableAgents.length}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Available Agents</p>
+                <p className="text-xl sm:text-3xl font-bold text-success">{availableAgents.length}</p>
               </div>
-              <CheckCircle2 className="w-8 h-8 text-success" />
+              <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 text-success shrink-0" />
             </div>
           </CardContent>
         </Card>
@@ -117,29 +117,29 @@ export function QueueOverview({ tickets, agents }: QueueOverviewProps) {
               waitingTickets.map((ticket) => (
                 <div
                   key={ticket.id}
-                  className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg border border-border"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0 p-3 sm:p-4 bg-secondary/50 rounded-lg border border-border"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm">
+                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground font-bold text-sm shrink-0">
                       {ticket.position}
                     </div>
-                    <div>
-                      <p className="font-medium text-foreground">{ticket.customerName}</p>
-                      <p className="text-sm text-muted-foreground">{ticket.serviceType}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-sm sm:text-base text-foreground truncate">{ticket.customerName}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate">{ticket.serviceType}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
-                    <Badge className={`${getPriorityColor(ticket.priority)} text-white`}>
+                  <div className="flex items-center justify-between sm:justify-end gap-3">
+                    <Badge className={`${getPriorityColor(ticket.priority)} text-white text-xs shrink-0`}>
                       {ticket.priority}
                     </Badge>
                     <div className="text-right">
-                      <p className="text-sm font-medium">~{ticket.estimatedWaitTime}min</p>
+                      <p className="text-xs sm:text-sm font-medium">~{ticket.estimatedWaitTime}min</p>
                       <p className={`text-xs ${getStatusColor(ticket.status)}`}>
                         {ticket.status.replace('_', ' ')}
                       </p>
                     </div>
-                    <Button size="sm" variant="outline">
+                    <Button size="sm" variant="outline" className="min-h-9 touch-manipulation text-xs">
                       Call Next
                     </Button>
                   </div>
@@ -159,33 +159,33 @@ export function QueueOverview({ tickets, agents }: QueueOverviewProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {agents.map((agent) => (
               <div
                 key={agent.id}
-                className="p-4 bg-secondary/50 rounded-lg border border-border"
+                className="p-3 sm:p-4 bg-secondary/50 rounded-lg border border-border"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-medium text-foreground">{agent.name}</h4>
+                  <h4 className="font-medium text-sm sm:text-base text-foreground truncate pr-2">{agent.name}</h4>
                   <Badge 
                     variant={agent.status === 'available' ? 'default' : 'secondary'}
-                    className={
+                    className={`shrink-0 text-xs ${
                       agent.status === 'available' 
                         ? 'bg-gradient-success text-white' 
                         : agent.status === 'busy'
                         ? 'bg-warning text-warning-foreground'
                         : 'bg-muted'
-                    }
+                    }`}
                   >
                     {agent.status}
                   </Badge>
                 </div>
-                <div className="space-y-1 text-sm text-muted-foreground">
+                <div className="space-y-1 text-xs sm:text-sm text-muted-foreground">
                   <p>Efficiency: {agent.efficiency}%</p>
                   <p>Served Today: {agent.totalServed}</p>
-                  <p>Skills: {agent.skills.join(', ')}</p>
+                  <p className="truncate">Skills: {agent.skills.join(', ')}</p>
                   {agent.currentTicket && (
-                    <p className="text-primary">Current: Ticket #{agent.currentTicket.slice(-3)}</p>
+                    <p className="text-primary truncate">Current: Ticket #{agent.currentTicket.slice(-3)}</p>
                   )}
                 </div>
               </div>
