@@ -45,6 +45,14 @@ export function DashboardHeader() {
             <Monitor className="w-4 h-4" />
             View Kiosk Interface
           </Button>
+          
+          <Button 
+            onClick={() => navigate('/subscription')}
+            variant="outline"
+            className="gap-2"
+          >
+            Subscription
+          </Button>
 
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Current Time</p>
