@@ -78,14 +78,22 @@ const KioskInterface = () => {
         <p className="text-lg mb-8 text-foreground">
           Get in line and receive real-time updates on your wait time
         </p>
-        <Button 
-          onClick={() => setCurrentStep('service')}
-          size="lg"
-          className="bg-gradient-primary hover:shadow-glow text-white font-semibold px-12 py-6 text-lg"
-        >
-          Start Check-In
-          <ArrowRight className="w-6 h-6 ml-2" />
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+          <Button 
+            onClick={() => setCurrentStep('service')}
+            size="lg" 
+            className="flex-1 h-16 text-lg font-semibold bg-primary hover:bg-primary/90"
+          >
+            Join Queue
+          </Button>
+          <Button 
+            onClick={() => navigate('/digital-services')}
+            size="lg" 
+            className="flex-1 h-16 text-lg font-semibold bg-secondary hover:bg-secondary/90"
+          >
+            Buy Airtime & Data
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import KioskInterface from "./pages/KioskInterface";
 import Subscription from "./pages/Subscription";
+import DigitalServices from "./pages/DigitalServices";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -20,6 +21,7 @@ const App = () => (
           <Route path="/" element={<Dashboard />} />
           <Route path="/kiosk" element={<KioskInterface />} />
           <Route path="/subscription" element={<Subscription />} />
+          <Route path="/digital-services" element={<DigitalServices />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
