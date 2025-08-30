@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import KioskInterface from "./pages/KioskInterface";
+import KioskPortal from "./pages/KioskPortal";
+import MobileTicketView from "./pages/MobileTicketView";
 import Subscription from "./pages/Subscription";
 import DigitalServices from "./pages/DigitalServices";
 import NotFound from "./pages/NotFound";
@@ -20,6 +22,8 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/kiosk" element={<KioskInterface />} />
+          <Route path="/kiosk-portal" element={<KioskPortal />} />
+          <Route path="/ticket/:ticketId" element={<MobileTicketView />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/digital-services" element={<DigitalServices />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

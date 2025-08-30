@@ -38,12 +38,12 @@ export function DashboardHeader() {
 
         <div className="flex items-center gap-4">
           <Button 
-            onClick={() => navigate('/kiosk')}
+            onClick={() => navigate('/kiosk-portal')}
             variant="outline"
             className="gap-2"
           >
             <Monitor className="w-4 h-4" />
-            View Kiosk Interface
+            Launch Kiosk Portal
           </Button>
           
           <Button 
