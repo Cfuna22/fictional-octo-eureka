@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import KioskInterface from "./pages/KioskInterface";
 import KioskPortal from "./pages/KioskPortal";
+import QKioskPro from "./pages/QKioskPro";
 import MobileTicketView from "./pages/MobileTicketView";
 import Subscription from "./pages/Subscription";
 import DigitalServices from "./pages/DigitalServices";
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/" element={<Dashboard />} />
           <Route path="/kiosk" element={<KioskInterface />} />
           <Route path="/kiosk-portal" element={<KioskPortal />} />
+          <Route path="/qkiosk-pro" element={<QKioskPro />} />
           <Route path="/ticket/:ticketId" element={<MobileTicketView />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/digital-services" element={<DigitalServices />} />

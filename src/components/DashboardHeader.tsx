@@ -45,6 +45,15 @@ export function DashboardHeader() {
             <Monitor className="w-4 h-4" />
             Launch Kiosk Portal
           </Button>
+
+          <Button 
+            onClick={() => navigate('/qkiosk-pro')}
+            variant="default"
+            className="gap-2 bg-gradient-to-r from-primary to-primary/80"
+          >
+            <Activity className="w-4 h-4" />
+            Q-Kiosk Pro
+          </Button>
           
           <Button 
             onClick={() => navigate('/subscription')}
