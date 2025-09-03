@@ -13,9 +13,13 @@ export default {
 		container: {
 			center: true,
 			padding: '2rem',
-			screens: {
-				'2xl': '1400px'
-			}
+		screens: {
+			sm: '480px',    // Small mobile
+			md: '769px',    // Tablet
+			lg: '1025px',   // Desktop
+			xl: '1280px',   // Large desktop
+			'2xl': '1400px' // Extra large
+		}
 		},
 		extend: {
 			colors: {

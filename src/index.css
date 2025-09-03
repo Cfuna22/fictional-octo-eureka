@@ -120,3 +120,55 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Touch-friendly interactive elements */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Responsive text scaling */
+  .text-responsive-sm {
+    @apply text-xs md:text-sm;
+  }
+  
+  .text-responsive-base {
+    @apply text-sm md:text-base;
+  }
+  
+  .text-responsive-lg {
+    @apply text-base md:text-lg;
+  }
+  
+  .text-responsive-xl {
+    @apply text-lg md:text-xl lg:text-2xl;
+  }
+  
+  /* Responsive spacing */
+  .space-responsive {
+    @apply space-y-3 md:space-y-4 lg:space-y-6;
+  }
+  
+  .gap-responsive {
+    @apply gap-3 md:gap-4 lg:gap-6;
+  }
+  
+  /* Responsive padding */
+  .p-responsive {
+    @apply p-3 md:p-4 lg:p-6;
+  }
+  
+  /* Mobile-first grid patterns */
+  .grid-responsive-cards {
+    @apply grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-3 lg:gap-6;
+  }
+  
+  .grid-responsive-full {
+    @apply grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4;
+  }
+  
+  /* Responsive containers */
+  .container-responsive {
+    @apply w-full max-w-full px-3 py-4 md:px-5 md:py-6 lg:px-6 lg:py-8;
+  }
+}
