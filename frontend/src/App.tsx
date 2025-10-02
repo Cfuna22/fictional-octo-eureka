@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
+import GovernmentMocks from "./pages/government.Api.tsx";
 import KioskInterface from "./pages/KioskInterface";
 import KioskPortal from "./pages/KioskPortal";
 import QKioskPro from "./pages/QKioskPro";
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/ticket/:ticketId" element={<MobileTicketView />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/digital-services" element={<DigitalServices />} />
+          <Route path="/government-verification" element={<GovernmentMocks />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
