@@ -38,7 +38,7 @@ const DigitalServices = () => {
 
   // === Flutterwave Config (hook at top level) ===
   const flutterwaveConfig = {
-    public_key: "FLWPUBK_TEST-150f01a26fa5500e5f8dbcb0c044c4cc-X", // 🔑 Replace with your real test key
+    public_key:  import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
     tx_ref: `digital-${Date.now()}`,
     amount: selectedService === 'data' ? selectedBundle?.price || 0 : parseFloat(amount) || 0,
     currency: 'NGN',
