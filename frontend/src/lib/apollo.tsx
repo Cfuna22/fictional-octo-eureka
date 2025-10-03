@@ -4,7 +4,7 @@ const client = new ApolloClient({
   link: new HttpLink({
     uri: "https://shcicocyypihgcnwfhks.supabase.co/graphql/v1",
     headers: {
-      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as String,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY as string,
       authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY!}`,
     },
   }),

@@ -3,9 +3,9 @@ import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Check, Download, Smartphone, CreditCard, ArrowLeft } from 'lucide-react';
+import { Check, Download, Smartphone, CreditCard, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 // Mock data for subscription plans
@@ -90,6 +90,7 @@ const Subscription: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<typeof subscriptionPlans[0] | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [currentPlan] = useState('professional'); // Mock current plan
 
   const formatPrice = (price: number) => {
@@ -116,7 +117,7 @@ const Subscription: React.FC = () => {
 
   // Flutterwave configuration
   const flutterwaveConfig = {
-    public_key: 'FLWPUBK_TEST-SANDBOXDEMOKEY-X', // Replace with actual public key
+    public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
     tx_ref: Date.now().toString(),
     amount: selectedPlan ? (isAnnual ? selectedPlan.annualPrice : selectedPlan.monthlyPrice) : 0,
     currency: 'NGN',
@@ -136,20 +137,20 @@ const Subscription: React.FC = () => {
   const handleFlutterPayment = useFlutterwave(flutterwaveConfig);
 
   const handlePaymentSuccess = () => {
+    setPaymentSuccess(true);
+    // Update subscription logic here
     closePaymentModal();
-    setIsPaymentModalOpen(false);
-    // Handle success - update subscription, show success message, etc.
   };
 
   const handleChoosePlan = (plan: typeof subscriptionPlans[0]) => {
     setSelectedPlan(plan);
+    setPaymentSuccess(false);
     setIsPaymentModalOpen(true);
   };
 
   const handleAirtimePayment = () => {
-    // Implement airtime payment flow
     console.log('Airtime payment initiated for plan:', selectedPlan?.name);
-    // This would typically open a USSD flow or SMS-based payment
+    setPaymentSuccess(true);
   };
 
   return (
@@ -312,66 +313,86 @@ const Subscription: React.FC = () => {
       {/* Payment Modal */}
       <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Complete Your Subscription</DialogTitle>
-          </DialogHeader>
-          
-          {selectedPlan && (
-            <div className="space-y-6">
-              {/* Plan Summary */}
-              <div className="p-4 bg-muted rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">{selectedPlan.name} Plan</span>
-                  <span className="text-lg font-bold text-primary">
-                    {getDisplayPrice(selectedPlan)}
-                  </span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Billing cycle: {isAnnual ? 'Annual' : 'Monthly'}
-                </div>
-                {isAnnual && (
-                  <div className="text-sm text-success font-medium mt-1">
-                    {getSavings(selectedPlan)}
+          {!paymentSuccess ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Complete Your Subscription</DialogTitle>
+              </DialogHeader>
+              
+              {selectedPlan && (
+                <div className="space-y-6">
+                  {/* Plan Summary */}
+                  <div className="p-4 bg-muted rounded-lg">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-medium">{selectedPlan.name} Plan</span>
+                      <span className="text-lg font-bold text-primary">
+                        {getDisplayPrice(selectedPlan)}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Billing cycle: {isAnnual ? 'Annual' : 'Monthly'}
+                    </div>
+                    {isAnnual && (
+                      <div className="text-sm text-success font-medium mt-1">
+                        {getSavings(selectedPlan)}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
 
-              {/* Payment Options */}
-              <div className="space-y-3">
-                <h3 className="font-medium">Choose Payment Method</h3>
-                
-                <Button
-                  className="w-full h-12 gap-3 bg-primary hover:bg-primary/90"
-                  onClick={() => {
-                    handleFlutterPayment({
-                      callback: (response) => {
-                        console.log(response);
-                        if (response.status === 'successful') {
-                          handlePaymentSuccess();
-                        }
-                        closePaymentModal();
-                      },
-                      onClose: () => {
-                        console.log('Payment modal closed');
-                      },
-                    });
-                  }}
-                >
-                  <CreditCard className="w-5 h-5" />
-                  Pay with Flutterwave
-                  <div className="text-xs opacity-90">Cards, Bank Transfer, Mobile Money</div>
-                </Button>
+                  {/* Payment Options */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium">Choose Payment Method</h3>
+                    
+                    <Button
+                      className="w-full h-12 gap-3 bg-primary hover:bg-primary/90"
+                      onClick={() => {
+                        handleFlutterPayment({
+                          callback: (response) => {
+                            console.log(response);
+                            if (response.status === 'successful') {
+                              handlePaymentSuccess();
+                            }
+                            closePaymentModal();
+                          },
+                          onClose: () => {
+                            console.log('Payment modal closed');
+                          },
+                        });
+                      }}
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      Pay with Flutterwave
+                      <div className="text-xs opacity-90">Cards, Bank Transfer, Mobile Money</div>
+                    </Button>
 
-                <Button
-                  variant="outline"
-                  className="w-full h-12 gap-3"
-                  onClick={handleAirtimePayment}
-                >
-                  <Smartphone className="w-5 h-5" />
-                  Pay with Airtime
-                  <div className="text-xs opacity-70">Mobile airtime deduction</div>
-                </Button>
-              </div>
+                    <Button
+                      variant="outline"
+                      className="w-full h-12 gap-3"
+                      onClick={handleAirtimePayment}
+                    >
+                      <Smartphone className="w-5 h-5" />
+                      Pay with Airtime
+                      <div className="text-xs opacity-70">Mobile airtime deduction</div>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            // ✅ Success Confirmation
+            <div className="flex flex-col items-center text-center space-y-4 p-6">
+              <CheckCircle2 className="w-14 h-14 text-green-600" />
+              <h2 className="text-xl font-bold">Payment Successful</h2>
+              <p className="text-sm text-muted-foreground">
+                You are now subscribed to the{" "}
+                <span className="font-medium">{selectedPlan?.name}</span> plan.
+              </p>
+              <Button
+                className="mt-4"
+                onClick={() => setIsPaymentModalOpen(false)}
+              >
+                Close
+              </Button>
             </div>
           )}
         </DialogContent>
@@ -381,3 +402,4 @@ const Subscription: React.FC = () => {
 };
 
 export default Subscription;
+
