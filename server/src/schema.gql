@@ -1,0 +1,331 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type AdminDashboard {
+  today: AdminTodayStats!
+  totals: AdminTotals!
+}
+
+type AdminTodayStats {
+  newQueueEntries: Int!
+  newUser: Int!
+}
+
+type AdminTotals {
+  totalKiosks: Int!
+  totalQueueEntries: Int!
+  totalQueues: Int!
+  totalUsers: Int!
+}
+
+type AverageWaitTime {
+  averageWaitMinutes: Float!
+}
+
+type CACResponse {
+  companyName: String!
+  rcNumber: String!
+  registeredAddress: String!
+  status: String!
+}
+
+input CreateFeedbackInput {
+  comment: String
+  message: String!
+  queueId: Int
+  rating: Int
+  userId: String!
+}
+
+input CreateKioskInput {
+  location: String!
+  name: String!
+  status: String
+}
+
+input CreateNotificationInput {
+  message: String!
+  to: String!
+  type: String!
+  userId: String
+}
+
+input CreatePaymentInput {
+  amount: Int!
+  customerName: String!
+  email: String!
+  phone: Float!
+  provider: String!
+  serviceId: String!
+  userId: String!
+}
+
+input CreateQueueEntryInput {
+  priority: QueuePriority = NORMAL
+  queueId: String!
+  status: String
+  userId: String!
+}
+
+input CreateServiceInput {
+  amount: Float!
+  kioskId: String!
+  name: String!
+  provider: String!
+  type: String!
+}
+
+input CreateUserInput {
+  email: String!
+  name: String!
+  phone: String!
+  role: UserRole!
+  supabaseId: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Feedback {
+  createdAt: DateTime!
+  id: ID!
+  message: String!
+  rating: Float
+  userId: String!
+}
+
+type KioskType {
+  createdAt: DateTime!
+  id: ID!
+  location: String!
+  name: String!
+  status: String!
+}
+
+type Mutation {
+  cancelEntry(entryId: String!): Boolean!
+  createFeedback(data: CreateFeedbackInput!): Feedback!
+  createKiosk(data: CreateKioskInput!): KioskType!
+  createNotification(data: CreateNotificationInput!): Notification!
+  createPayment(input: CreatePaymentInput!): Payment!
+  createQueue(description: String!, kioskId: String!, name: String!): Queue!
+  createQueueEntry(input: CreateQueueEntryInput!): QueueEntry!
+  createService(data: CreateServiceInput!): Service!
+  createUser(createUserInput: CreateUserInput!): User!
+  createUserFromAuth(createUserInput: CreateUserInput!): User!
+  deleteFeedback(id: String!): Boolean!
+  deleteKiosk(id: String!): KioskType
+  deleteNotification(id: String!): Boolean!
+  deletePayment(id: String!): Boolean!
+  getNextQueueEntry(queueId: String!): QueueEntry
+  joinQueue(priority: String, queueId: String!, userId: String!): QueueEntry!
+  markPaymentFail(id: String!): Boolean!
+  markPaymentSuccess(id: String!, reference: String!): Boolean!
+  pause(queueId: String!): QueueSummary!
+  pauseQueue(queueId: String!): Boolean!
+  prioritizeUser(EntryId: String!): QueueSummary!
+  purchaseService(id: Int!, userId: Int!): Boolean!
+  rejoinQueue(queueId: String!, userId: String!): Boolean!
+  remove(id: String!): Boolean!
+  removeQueueEntry(id: String!): QueueEntry
+  removeService(id: Float!): Boolean!
+  removeUser(id: Int!): Boolean!
+  resumeQueue(queueId: String!): Boolean!
+  serveNext(queueId: String!): QueueEntry!
+  simulateWebhook(input: SimulateWebhookInput!): Payment!
+  update(description: String!, id: String!, name: String!): Queue!
+  updateFeedback(data: UpdateFeedbackInput!, id: String!): Feedback
+  updateKiosk(data: UpdateKioskInput!, id: String!): KioskType
+  updateNotification(data: UpdateNotificationInput!, id: String!): Notification
+  updatePayment(id: String!, input: CreatePaymentInput!): Payment!
+  updateQueueEntry(id: String!, input: UpdateQueueEntryInput!): QueueEntry
+  updateUser(updateUserInput: UpdateUserInput!): User!
+}
+
+type NINResponse {
+  dateOfBirth: String!
+  fullName: String!
+  gender: String!
+  nin: String!
+  valid: Boolean!
+}
+
+type Notification {
+  createdAt: DateTime!
+  id: ID!
+  isRead: Boolean!
+  message: String!
+  to: String!
+  type: String!
+  userId: String!
+}
+
+type Payment {
+  amount: Float!
+  createdAt: String!
+  currency: String!
+  id: Int!
+  reference: String!
+  status: String!
+  updatedAt: String
+}
+
+type PhoneResponse {
+  carrier: String
+  phone: String!
+  valid: Boolean!
+}
+
+type Query {
+  findAll: [Service!]!
+  getAdminDashboard: AdminDashboard!
+  getFeedback(id: String!): Feedback
+  getFeedbacks: [Feedback!]!
+  getHistory(userId: String!): [QueueHistory!]!
+  getNotification(id: String!): Notification
+  getNotifications: [Notification!]!
+  getPosition(queueId: String!, userId: String!): QueuePosition!
+  getQueue(id: String!): Queue!
+  getQueues: [Queue!]!
+  kiosk(id: String!): KioskType
+  kiosks: [KioskType!]!
+  payment(id: String!): Payment
+  predictAverageWaitTime(queueId: String!): AverageWaitTime!
+  predictUserWaitTime(currentQueueSize: Float!, queueId: String!): UserWaitTime!
+  queueEntries: [QueueEntry!]!
+  queueEntriesByQueue(queueId: String!): [QueueEntry!]!
+  queueEntry(id: String!): QueueEntry
+  service(id: Float!): Service!
+  user(id: Int!): User!
+  userBySupabaseId(supabaseId: String!): User
+  users: [User!]!
+  verifyCAC(cacNumber: String!): CACResponse!
+  verifyNIN(nin: String!): NINResponse!
+  verifyPhone(phone: String!): PhoneResponse!
+  verifyTIN(tin: String!): TINResponse!
+}
+
+type Queue {
+  createdAt: String!
+  description: String!
+  id: ID!
+  kioskId: ID!
+  name: String!
+  status: String!
+}
+
+type QueueEntry {
+  id: ID!
+  joinedAt: DateTime
+  priority: QueuePriority!
+  queueId: String!
+  servedAt: DateTime
+  status: String
+  userId: String!
+}
+
+type QueueHistory {
+  joinedAt: String!
+  leftAt: String
+  queueId: Int!
+  status: String!
+}
+
+type QueuePosition {
+  position: Int!
+  queueId: Int!
+  userId: Int!
+}
+
+enum QueuePriority {
+  NORMAL
+  STAFF
+  VIP
+}
+
+type QueueSummary {
+  EntryId: ID!
+  createdAt: DateTime!
+  queueId: ID!
+  status: String!
+  userId: ID!
+}
+
+type Service {
+  description: String
+  id: Int!
+  price: Float!
+  title: String!
+}
+
+input SimulateWebhookInput {
+  amount: Float!
+  currency: String!
+  event: String!
+  paymentId: String!
+  reference: String
+  status: String!
+}
+
+type TINResponse {
+  name: String!
+  taxOffice: String!
+  tin: String!
+  valid: Boolean!
+}
+
+input UpdateFeedbackInput {
+  message: String
+  rating: Int
+}
+
+input UpdateKioskInput {
+  location: String
+  name: String
+  status: String
+}
+
+input UpdateNotificationInput {
+  message: String
+  to: String
+  type: String
+  userId: String
+}
+
+input UpdateQueueEntryInput {
+  priority: QueuePriority
+  queueId: String
+  status: String
+  userId: String
+}
+
+input UpdateUserInput {
+  email: String
+  id: Int!
+  name: String
+  phone: String
+  role: UserRole
+  supabaseId: String
+}
+
+type User {
+  email: String!
+  id: ID!
+  name: String!
+  phone: String
+  role: UserRole
+  supabaseId: String!
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  STAFF
+}
+
+type UserWaitTime {
+  estimatedWaitMinutes: Float!
+}
