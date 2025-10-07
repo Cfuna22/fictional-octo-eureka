@@ -172,3 +172,35 @@ All colors MUST be HSL.
     @apply w-full max-w-full px-3 py-4 md:px-5 md:py-6 lg:px-6 lg:py-8;
   }
 }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes ripple {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bob {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(4deg); }
+}
+
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-wave { animation: wave 4s ease-in-out infinite; }
+.animate-ripple { animation: ripple 3s ease-out infinite; }
+.animate-fade-in-up { animation: fade-in-up 0.8s ease forwards; }
+.animate-bob { animation: bob 2s ease-in-out infinite; }
+

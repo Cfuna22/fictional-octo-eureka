@@ -12,10 +12,13 @@ import {
   Zap,
   Users,
   Phone,
-  ArrowLeft
+  ArrowLeft,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { queueService } from '@/services/queueService';
 
 const KioskInterface = () => {
   const navigate = useNavigate();
@@ -24,6 +27,9 @@ const KioskInterface = () => {
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [ticketNumber, setTicketNumber] = useState('');
+  const [queuePosition, setQueuePosition] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   const services = [
     { id: 'account', name: 'Account Opening', wait: '12 min', priority: 'normal' },
@@ -33,12 +39,53 @@ const KioskInterface = () => {
     { id: 'investment', name: 'Investment Consultation', wait: '30 min', priority: 'normal' }
   ];
 
+  // Validate and format Kenyan phone number
+  const validateAndFormatPhone = (phone: string): string | null => {
+    // Remove all non-digit characters
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Kenyan phone number patterns
+    if (cleanPhone.length === 9 && cleanPhone.startsWith('7')) {
+      return `+254${cleanPhone}`;
+    }
+    
+    if (cleanPhone.length === 10 && cleanPhone.startsWith('07')) {
+      return `+254${cleanPhone.substring(1)}`;
+    }
+    
+    if (cleanPhone.length === 12 && cleanPhone.startsWith('254')) {
+      return `+${cleanPhone}`;
+    }
+    
+    if (cleanPhone.length === 13 && cleanPhone.startsWith('254')) {
+      return `+${cleanPhone}`;
+    }
+    
+    return null;
+  };
+
+  const handlePhoneChange = (value: string) => {
+    setPhoneNumber(value);
+    
+    if (value.trim() === '') {
+      setPhoneError('');
+      return;
+    }
+    
+    const formatted = validateAndFormatPhone(value);
+    if (!formatted) {
+      setPhoneError('Please enter a valid Kenyan phone number (e.g., 0795160491 or 795160491)');
+    } else {
+      setPhoneError('');
+    }
+  };
+
   const handleServiceSelect = (service: any) => {
     setSelectedService(service);
     setCurrentStep('details');
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!customerName.trim()) {
       toast({
         title: "Name Required",
@@ -48,15 +95,69 @@ const KioskInterface = () => {
       return;
     }
 
-    // Generate ticket number
-    const ticket = `Q${Date.now().toString().slice(-4)}`;
-    setTicketNumber(ticket);
-    setCurrentStep('ticket');
-    
-    toast({
-      title: "Ticket Generated",
-      description: `Your ticket ${ticket} has been created successfully.`,
-    });
+    // Validate phone if provided
+    if (phoneNumber.trim() && phoneError) {
+      toast({
+        title: "Invalid Phone Number",
+        description: phoneError,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Format phone number for backend
+      let formattedPhone = '';
+      if (phoneNumber.trim()) {
+        const validatedPhone = validateAndFormatPhone(phoneNumber);
+        if (!validatedPhone) {
+          throw new Error('Invalid phone number format');
+        }
+        formattedPhone = validatedPhone;
+      } else {
+        // Use a default format if no phone provided
+        formattedPhone = '+254700000000';
+      }
+
+      // Call backend to join queue
+      const response = await queueService.joinQueue({
+        name: customerName,
+        phone: formattedPhone
+      });
+
+      // Generate ticket number from backend response
+      const ticket = `Q${response.id.slice(-6).toUpperCase()}`;
+      setTicketNumber(ticket);
+      setQueuePosition(response.position);
+      
+      setCurrentStep('ticket');
+      
+      toast({
+        title: "Ticket Generated",
+        description: `Your ticket ${ticket} has been created successfully.`,
+      });
+
+      // If phone number was provided, show WhatsApp notification message
+      if (phoneNumber.trim()) {
+        toast({
+          title: "WhatsApp Notification Sent",
+          description: "You'll receive queue updates via WhatsApp.",
+          variant: "default"
+        });
+      }
+
+    } catch (error: any) {
+      console.error('Failed to join queue:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to join queue. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderWelcomeScreen = () => (
@@ -170,6 +271,7 @@ const KioskInterface = () => {
             onChange={(e) => setCustomerName(e.target.value)}
             placeholder="Enter your full name"
             className="text-lg p-4"
+            disabled={isLoading}
           />
         </div>
 
@@ -178,27 +280,46 @@ const KioskInterface = () => {
           <Input
             id="phone"
             value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            placeholder="Enter your phone number for SMS updates"
+            onChange={(e) => handlePhoneChange(e.target.value)}
+            placeholder="0795160491 or 795160491"
             className="text-lg p-4"
+            disabled={isLoading}
           />
+          {phoneError && (
+            <div className="flex items-center gap-2 text-destructive text-sm">
+              <AlertCircle className="w-4 h-4" />
+              {phoneError}
+            </div>
+          )}
           <p className="text-sm text-muted-foreground flex items-center gap-1">
             <Phone className="w-3 h-3" />
-            Receive real-time queue updates via SMS
+            Receive real-time queue updates via WhatsApp
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Format: 0795160491, 795160491, or +254795160491
           </p>
         </div>
 
         <div className="pt-4 space-y-4">
           <Button 
             onClick={handleSubmit}
+            disabled={isLoading || !customerName.trim() || !!phoneError}
             className="w-full bg-gradient-primary hover:shadow-glow text-white font-semibold p-4 text-lg"
           >
-            Generate Ticket
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Joining Queue...
+              </>
+            ) : (
+              'Generate Ticket'
+            )}
           </Button>
           <Button 
             onClick={() => setCurrentStep('service')}
             variant="ghost"
             className="w-full"
+            disabled={isLoading}
           >
             ← Change Service Type
           </Button>
@@ -227,7 +348,7 @@ const KioskInterface = () => {
 
         <div className="grid grid-cols-2 gap-4 text-center">
           <div>
-            <p className="text-2xl font-bold text-foreground">3</p>
+            <p className="text-2xl font-bold text-foreground">{queuePosition - 1}</p>
             <p className="text-sm text-muted-foreground">People ahead</p>
           </div>
           <div>
@@ -246,7 +367,7 @@ const KioskInterface = () => {
           <div className="bg-success/10 border border-success/30 rounded-lg p-4">
             <p className="text-sm text-success flex items-center justify-center gap-2">
               <Phone className="w-4 h-4" />
-              SMS updates will be sent to {phoneNumber}
+              WhatsApp updates will be sent to {phoneNumber}
             </p>
           </div>
         )}
@@ -258,6 +379,8 @@ const KioskInterface = () => {
             setPhoneNumber('');
             setSelectedService(null);
             setTicketNumber('');
+            setQueuePosition(0);
+            setPhoneError('');
           }}
           variant="outline"
           className="w-full"

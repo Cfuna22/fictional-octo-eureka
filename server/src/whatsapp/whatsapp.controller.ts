@@ -1,137 +1,225 @@
-import { 
-  Controller, 
-  Get, 
-  Post, 
-  Body, 
-  Query,
-  Logger 
+// import {
+//   Controller,
+//   Get,
+//   Post,
+//   Body,
+//   Query,
+//   Logger
+// } from '@nestjs/common';
+// import { WhatsAppService } from './whatsapp.service';
+
+// @Controller('whatsapp')
+// export class WhatsAppController {
+//   private readonly logger = new Logger(WhatsAppController.name);
+
+//   constructor(private readonly whatsappService: WhatsAppService) {}
+
+//   /**
+//    * Test WhatsApp connection with a specific phone number
+//    */
+//   @Get('test')
+//   async testConnection(@Query('phone') phone: string) {
+//     this.logger.log(`🧪 Testing WhatsApp connection to: ${phone}`);
+
+//     if (!phone) {
+//       return {
+//         success: false,
+//         error: 'Phone number is required. Use ?phone=+254712345678'
+//       };
+//     }
+
+//     try {
+//       const result = await this.whatsappService.testConnection(phone);
+//       return {
+//         success: true,
+//         message: 'WhatsApp test message sent successfully!',
+//         data: result
+//       };
+//     } catch (error: any) {
+//       return {
+//         success: false,
+//         error: error.response?.data?.error?.message || error.message,
+//         details: error.response?.data
+//       };
+//     }
+//   }
+
+//   /**
+//    * Verify WhatsApp credentials and account status
+//    */
+//   @Get('verify')
+//   async verifyCredentials() {
+//     this.logger.log('🔐 Verifying WhatsApp credentials...');
+
+//     try {
+//       const result = await this.whatsappService.verifyCredentials();
+//       return {
+//         success: true,
+//         message: 'WhatsApp credentials are valid!',
+//         data: result
+//       };
+//     } catch (error: any) {
+//       return {
+//         success: false,
+//         error: error.response?.data?.error?.message || error.message,
+//         details: error.response?.data
+//       };
+//     }
+//   }
+
+//   /**
+//    * Send a custom text message
+//    */
+//   @Post('send-text')
+//   async sendTextMessage(
+//     @Body() body: { phone: string; message: string }
+//   ) {
+//     const { phone, message } = body;
+
+//     if (!phone || !message) {
+//       return {
+//         success: false,
+//         error: 'Phone and message are required'
+//       };
+//     }
+
+//     this.logger.log(`📤 Sending text message to: ${phone}`);
+
+//     try {
+//       const result = await this.whatsappService.sendTextMessage(phone, message);
+//       return {
+//         success: true,
+//         message: 'Text message sent successfully!',
+//         data: result
+//       };
+//     } catch (error: any) {
+//       return {
+//         success: false,
+//         error: error.response?.data?.error?.message || error.message,
+//         details: error.response?.data
+//       };
+//     }
+//   }
+
+//   /**
+//    * Send a template message
+//    */
+//   @Post('send-template')
+//   async sendTemplateMessage(
+//     @Body() body: { phone: string; template?: string; language?: string }
+//   ) {
+//     const { phone, template = 'hello_world', language = 'en_US' } = body;
+
+//     if (!phone) {
+//       return {
+//         success: false,
+//         error: 'Phone number is required'
+//       };
+//     }
+
+//     this.logger.log(`📤 Sending template message to: ${phone}`);
+
+//     try {
+//       const result = await this.whatsappService.sendTemplateMessage(phone, template, language);
+//       return {
+//         success: true,
+//         message: 'Template message sent successfully!',
+//         data: result
+//       };
+//     } catch (error: any) {
+//       return {
+//         success: false,
+//         error: error.response?.data?.error?.message || error.message,
+//         details: error.response?.data
+//       };
+//     }
+//   }
+// }
+
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  BadRequestException,
+  Logger,
+  Param,
 } from '@nestjs/common';
 import { WhatsAppService } from './whatsapp.service';
 
-@Controller('whatsapp')
+@Controller('queue')
 export class WhatsAppController {
-  private readonly logger = new Logger(WhatsAppController.name);
+  private readonly logger = new Logger(WhatsAppService.name);
 
-  constructor(private readonly whatsappService: WhatsAppService) {}
+  constructor(private readonly queueService: WhatsAppService) {}
 
-  /**
-   * Test WhatsApp connection with a specific phone number
-   */
-  @Get('test')
-  async testConnection(@Query('phone') phone: string) {
-    this.logger.log(`🧪 Testing WhatsApp connection to: ${phone}`);
-    
-    if (!phone) {
-      return {
-        success: false,
-        error: 'Phone number is required. Use ?phone=+254712345678'
-      };
+  @Post('join')
+  async joinQueue(@Body() body: { phone?: string; name?: string }) {
+    const { phone, name } = body;
+
+    if (!phone || !name) {
+      throw new BadRequestException('Phone and Name are required');
     }
 
+    // Normalize phone for Twilio (+2547xxxxxxx format)
+    let normalizedPhone = phone.trim();
+    if (!normalizedPhone.startsWith('+')) {
+      normalizedPhone = `+${normalizedPhone}`;
+    }
+
+    this.logger.debug(
+      `➡️ joinQueue request: phone=${normalizedPhone}, name=${name}`,
+    );
+
     try {
-      const result = await this.whatsappService.testConnection(phone);
-      return {
-        success: true,
-        message: 'WhatsApp test message sent successfully!',
-        data: result
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error?.message || error.message,
-        details: error.response?.data
-      };
+      const response = await this.queueService.joinQueue(normalizedPhone, name);
+      this.logger.debug(`✅ Queue joined: ${JSON.stringify(response)}`);
+      return response;
+    } catch (err) {
+      this.logger.error(`❌ joinQueue failed: ${err.message}`, err.stack);
+      throw err;
     }
   }
 
-  /**
-   * Verify WhatsApp credentials and account status
-   */
-  @Get('verify')
-  async verifyCredentials() {
-    this.logger.log('🔐 Verifying WhatsApp credentials...');
-    
-    try {
-      const result = await this.whatsappService.verifyCredentials();
-      return {
-        success: true,
-        message: 'WhatsApp credentials are valid!',
-        data: result
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error?.message || error.message,
-        details: error.response?.data
-      };
-    }
+  @Get()
+  async getQueue() {
+    this.logger.debug(`➡️ Fetching current queue`);
+    const result = await this.queueService.getQueue();
+    this.logger.debug(`✅ Queue fetched: ${result.length} people in queue`);
+    return result;
   }
 
-  /**
-   * Send a custom text message
-   */
-  @Post('send-text')
-  async sendTextMessage(
-    @Body() body: { phone: string; message: string }
-  ) {
-    const { phone, message } = body;
-    
-    if (!phone || !message) {
-      return {
-        success: false,
-        error: 'Phone and message are required'
-      };
+  @Get('position/:phone')
+  async getPosition(@Param('phone') phone: string) {
+    let normalizedPhone = phone.trim();
+    if (!normalizedPhone.startsWith('+')) {
+      normalizedPhone = `+${normalizedPhone}`;
     }
 
-    this.logger.log(`📤 Sending text message to: ${phone}`);
+    this.logger.debug(`➡️ Getting position for: ${normalizedPhone}`);
     
-    try {
-      const result = await this.whatsappService.sendTextMessage(phone, message);
-      return {
-        success: true,
-        message: 'Text message sent successfully!',
-        data: result
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error?.message || error.message,
-        details: error.response?.data
-      };
+    const position = await this.queueService.getQueuePosition(normalizedPhone);
+    
+    if (position === null) {
+      throw new BadRequestException('Phone number not found in queue');
     }
+
+    return { phone: normalizedPhone, position };
   }
 
-  /**
-   * Send a template message
-   */
-  @Post('send-template')
-  async sendTemplateMessage(
-    @Body() body: { phone: string; template?: string; language?: string }
-  ) {
-    const { phone, template = 'hello_world', language = 'en_US' } = body;
-    
-    if (!phone) {
-      return {
-        success: false,
-        error: 'Phone number is required'
-      };
+  @Post('complete/:phone')
+  async completeService(@Param('phone') phone: string) {
+    let normalizedPhone = phone.trim();
+    if (!normalizedPhone.startsWith('+')) {
+      normalizedPhone = `+${normalizedPhone}`;
     }
 
-    this.logger.log(`📤 Sending template message to: ${phone}`);
+    this.logger.debug(`➡️ Completing service for: ${normalizedPhone}`);
     
-    try {
-      const result = await this.whatsappService.sendTemplateMessage(phone, template, language);
-      return {
-        success: true,
-        message: 'Template message sent successfully!',
-        data: result
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        error: error.response?.data?.error?.message || error.message,
-        details: error.response?.data
-      };
-    }
+    await this.queueService.completeService(normalizedPhone);
+    
+    return { message: 'Service completed successfully', phone: normalizedPhone };
   }
+
+  // Remove the USSD callback method since you have a separate module for that
 }

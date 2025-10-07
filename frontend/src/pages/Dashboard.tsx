@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Monitor, Users, Activity, Brain, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { gql, useQuery } from '@apollo/client';
+import { motion } from "framer-motion";
+import { WifiOff } from "lucide-react";
 
 // ✅ Supabase GraphQL query (Relay-style)
 const GET_DASHBOARD_DATA = gql`
@@ -71,8 +73,35 @@ const Dashboard = () => {
     fetchPolicy: 'network-only', // always get fresh data
   });
 
-  if (loading) return <p className="p-4">Loading dashboard...</p>;
-  if (error) return <p className="p-4 text-red-500">Error: {error.message}</p>;
+  if (loading)
+  return (
+    <div className="flex items-center justify-center h-[80vh]">
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full"
+      ></motion.div>
+      <motion.p
+        className="ml-4 text-indigo-600 font-semibold text-lg"
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ repeat: Infinity, duration: 1.5 }}
+      >
+        Loading Dashboard...
+      </motion.p>
+    </div>
+  );
+  if (error)
+  return (
+    <div className="flex flex-col items-center justify-center h-[80vh] text-center">
+      <WifiOff className="w-16 h-16 text-red-500 mb-4" />
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+        Connection Error
+      </h2>
+      <p className="mt-2 text-gray-500 dark:text-gray-400">
+        Please check your internet connection and try again.
+      </p>
+    </div>
+  );
 
   // ✅ Unwrap Relay-style edges → node
   const kiosks = data?.kiosksCollection?.edges.map((e: any) => e.node) ?? [];
