@@ -1,18 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { 
   Brain, 
   TrendingUp, 
   AlertTriangle, 
   CheckCircle2,
-  Clock,
-  Users,
   Zap,
   Target,
-  Activity
+  Activity,
+  ArrowLeft
 } from 'lucide-react';
 
 export function AIInsightsPanel() {
+  const navigate = useNavigate();
+
   const insights = [
     {
       type: 'prediction',
@@ -87,6 +90,7 @@ export function AIInsightsPanel() {
           Real-time AI analysis and recommendations
         </p>
       </CardHeader>
+
       <CardContent>
         <div className="space-y-4">
           {insights.map((insight, index) => (
@@ -98,7 +102,7 @@ export function AIInsightsPanel() {
                 <div className="flex-shrink-0">
                   {getSeverityIcon(insight.severity)}
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge variant="outline" className="text-xs">
@@ -112,15 +116,15 @@ export function AIInsightsPanel() {
                       {insight.confidence}% confidence
                     </Badge>
                   </div>
-                  
+
                   <h4 className="font-medium text-foreground mb-1">
                     {insight.title}
                   </h4>
-                  
+
                   <p className="text-sm text-muted-foreground mb-2">
                     {insight.description}
                   </p>
-                  
+
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-muted-foreground">Recommended:</span>
                     <span className="text-primary font-medium">
@@ -154,7 +158,19 @@ export function AIInsightsPanel() {
             </div>
           </div>
         </div>
+
+        <div className="mt-6 flex justify-end">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/')}
+            className="gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
 }
+

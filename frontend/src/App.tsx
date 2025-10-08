@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import GovernmentMocks from "./pages/government.Api.tsx";
+import { AIInsightsPanel } from '@/components/AIInsightsPanel';
 import KioskInterface from "./pages/KioskInterface";
 import KioskPortal from "./pages/KioskPortal";
 import QKioskPro from "./pages/QKioskPro";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/ticket/:ticketId" element={<MobileTicketView />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/digital-services" element={<DigitalServices />} />
+          <Route path="/ai" element={<AIInsightsPanel />} />
           <Route path="/government-verification" element={<GovernmentMocks />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

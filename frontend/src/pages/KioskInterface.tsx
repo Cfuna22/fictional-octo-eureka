@@ -46,11 +46,11 @@ const KioskInterface = () => {
     
     // Kenyan phone number patterns
     if (cleanPhone.length === 9 && cleanPhone.startsWith('7')) {
-      return `+254${cleanPhone}`;
+      return `+234${cleanPhone}`;
     }
     
     if (cleanPhone.length === 10 && cleanPhone.startsWith('07')) {
-      return `+254${cleanPhone.substring(1)}`;
+      return `+234${cleanPhone.substring(1)}`;
     }
     
     if (cleanPhone.length === 12 && cleanPhone.startsWith('254')) {
@@ -118,7 +118,7 @@ const KioskInterface = () => {
         formattedPhone = validatedPhone;
       } else {
         // Use a default format if no phone provided
-        formattedPhone = '+254700000000';
+        formattedPhone = '+234700000000';
       }
 
       // Call backend to join queue
@@ -296,7 +296,7 @@ const KioskInterface = () => {
             Receive real-time queue updates via WhatsApp
           </p>
           <p className="text-xs text-muted-foreground">
-            Format: 0795160491, 795160491, or +254795160491
+            Format: 0795160491, 795160491, or +234795160491
           </p>
         </div>
 
