@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: queue-backend
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        value: postgresql://postgres.shcicocyypihgcnwfhks:Abel3517%23%2312345612345678@aws-1-eu-north-1.pooler.supabase.com:5432/postgres
