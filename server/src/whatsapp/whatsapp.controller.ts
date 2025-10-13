@@ -24,7 +24,7 @@
 //     if (!phone) {
 //       return {
 //         success: false,
-//         error: 'Phone number is required. Use ?phone=+254712345678'
+//         error: 'Phone number is required. Use ?phone=+234712345678'
 //       };
 //     }
 
@@ -144,6 +144,7 @@ import {
   BadRequestException,
   Logger,
   Param,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { WhatsAppService } from './whatsapp.service';
 
@@ -151,7 +152,7 @@ import { WhatsAppService } from './whatsapp.service';
 export class WhatsAppController {
   private readonly logger = new Logger(WhatsAppService.name);
 
-  constructor(private readonly queueService: WhatsAppService) {}
+  constructor(private readonly queueService: WhatsAppService) { }
 
   @Post('join')
   async joinQueue(@Body() body: { phone?: string; name?: string }) {
@@ -161,7 +162,7 @@ export class WhatsAppController {
       throw new BadRequestException('Phone and Name are required');
     }
 
-    // Normalize phone for Twilio (+2547xxxxxxx format)
+    // Normalize phone for Twilio (+2347xxxxxxx format)
     let normalizedPhone = phone.trim();
     if (!normalizedPhone.startsWith('+')) {
       normalizedPhone = `+${normalizedPhone}`;
@@ -181,12 +182,26 @@ export class WhatsAppController {
     }
   }
 
+  //@Get()
+  //async getQueue() {
+    //this.logger.debug(`➡️ Fetching current queue`);
+    //const result = await this.queueService.getQueue();
+    //this.logger.debug(`✅ Queue fetched: ${result.length} people in queue`);
+    //return result;
+  //}
+  
   @Get()
   async getQueue() {
-    this.logger.debug(`➡️ Fetching current queue`);
-    const result = await this.queueService.getQueue();
-    this.logger.debug(`✅ Queue fetched: ${result.length} people in queue`);
-    return result;
+    this.logger.debug('➡️ Fetching current queue');
+    
+    try {
+      const tickets = await this.queueService.getQueue();
+      this.logger.debug(`✅ Queue fetched: ${tickets.length} tickets`);
+      return tickets;
+    } catch (error) {
+      this.logger.error(`❌ Failed to fetch queue: ${error.message}`, error.stack);
+      throw new InternalServerErrorException('Failed to fetch queue data');
+    }
   }
 
   @Get('position/:phone')
@@ -197,9 +212,9 @@ export class WhatsAppController {
     }
 
     this.logger.debug(`➡️ Getting position for: ${normalizedPhone}`);
-    
+
     const position = await this.queueService.getQueuePosition(normalizedPhone);
-    
+
     if (position === null) {
       throw new BadRequestException('Phone number not found in queue');
     }
@@ -215,9 +230,9 @@ export class WhatsAppController {
     }
 
     this.logger.debug(`➡️ Completing service for: ${normalizedPhone}`);
-    
+
     await this.queueService.completeService(normalizedPhone);
-    
+
     return { message: 'Service completed successfully', phone: normalizedPhone };
   }
 

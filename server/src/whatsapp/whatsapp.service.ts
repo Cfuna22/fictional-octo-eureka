@@ -180,11 +180,11 @@
 
 //     // Convert local Kenyan numbers to international format
 //     if (formatted.startsWith('+0')) {
-//       formatted = formatted.replace('+0', '+254');
+//       formatted = formatted.replace('+0', '+234');
 //     } else if (formatted.startsWith('07') && formatted.length === 10) {
-//       formatted = `+254${formatted.slice(1)}`;
+//       formatted = `+234${formatted.slice(1)}`;
 //     } else if (formatted.startsWith('7') && formatted.length === 9) {
-//       formatted = `+254${formatted}`;
+//       formatted = `+234${formatted}`;
 //     }
 
 //     this.logger.debug(`Formatted phone: ${phone} -> ${formatted}`);
@@ -227,7 +227,7 @@
 //   }
 // }
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Pool } from 'pg';
 import twilio from 'twilio';
@@ -236,6 +236,7 @@ import twilio from 'twilio';
 export class WhatsAppService {
   private pool: Pool;
   private twilioClient: ReturnType<typeof twilio>;
+  private readonly logger = new Logger(WhatsAppService.name);
 
   constructor(private config: ConfigService) {
     this.pool = new Pool({ connectionString: this.config.get('DATABASE_URL') });
@@ -297,14 +298,14 @@ export class WhatsAppService {
     return { id, position, newUser: existingUser.rowCount === 0 };
   }
 
-  async getQueue() {
-    const result = await this.pool.query(
-      `SELECT id, phone, name, status, created_at,
-      row_number() over (order by created_at) as position
-      FROM queue WHERE status='waiting'`,
-    );
-    return result.rows;
-  }
+  //async getQueue() {
+    //const result = await this.pool.query(
+      //`SELECT id, phone, name, status, created_at,
+      //row_number() over (order by created_at) as position
+      //FROM queue WHERE status='waiting'`,
+    //);
+    //return result.rows;
+  //}
 
   async getQueuePosition(phone: string) {
     const result = await this.pool.query(
@@ -317,17 +318,17 @@ export class WhatsAppService {
       WHERE phone = $1`,
       [phone],
     );
-    
+
     if (result.rows.length === 0) {
       return null;
     }
-    
+
     return result.rows[0].position;
   }
 
   async notifyPositionUpdate(phone: string, name: string, position: number) {
     const message = `📢 Update for ${name}: Your queue position is now ${position}`;
-    
+
     try {
       await this.twilioClient.messages.create({
         body: message,
@@ -344,5 +345,44 @@ export class WhatsAppService {
       `UPDATE queue SET status = 'completed' WHERE phone = $1 AND status = 'waiting'`,
       [phone],
     );
+  }
+  
+  async getQueue(): Promise<any[]> {
+    const client = await this.pool.connect();
+  
+    try {
+      this.logger.debug('🔍 Fetching queue tickets from database');
+     
+      const result = await client.query(`
+        SELECT 
+          id,
+          phone,
+          name as customer_name,  -- Make sure this matches your database column
+          service_type,
+          ticket_number,
+          status,
+          created_at,
+          ROW_NUMBER() OVER (PARTITION BY service_type ORDER BY created_at) as position,
+          (ROW_NUMBER() OVER (PARTITION BY service_type ORDER BY created_at) - 1) * 2 as estimated_wait_time,
+          'normal' as priority
+        FROM queue 
+        WHERE status = 'waiting'
+        ORDER BY service_type, created_at
+      `);
+
+      this.logger.debug(`📊 Found ${result.rows.length} waiting tickets`);
+    
+      return result.rows.map(ticket => ({
+        ...ticket,
+        customer_name: ticket.customer_name || 'Guest Customer', // Fallback for missing names
+        service_type: ticket.service_type || 'General Service', // Fallback for missing service types
+        ticket_number: ticket.ticket_number || `T${ticket.id.slice(-6)}` // Fallback for missing ticket numbers
+      }));
+    } catch (error) {
+      this.logger.error(`❌ Database error in getQueueTickets: ${error.message}`);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
