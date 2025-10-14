@@ -289,7 +289,6 @@ export class WhatsAppService {
         from: this.config.get('TWILIO_WHATSAPP_NUMBER'),
         to: `whatsapp:${phone}`,
       });
-
     } catch (err) {
       console.error('❌ Failed to send WhatsApp notifications', err);
       throw err; // Re-throw to handle in controller
@@ -299,12 +298,12 @@ export class WhatsAppService {
   }
 
   //async getQueue() {
-    //const result = await this.pool.query(
-      //`SELECT id, phone, name, status, created_at,
-      //row_number() over (order by created_at) as position
-      //FROM queue WHERE status='waiting'`,
-    //);
-    //return result.rows;
+  //const result = await this.pool.query(
+  //`SELECT id, phone, name, status, created_at,
+  //row_number() over (order by created_at) as position
+  //FROM queue WHERE status='waiting'`,
+  //);
+  //return result.rows;
   //}
 
   async getQueuePosition(phone: string) {
@@ -346,13 +345,13 @@ export class WhatsAppService {
       [phone],
     );
   }
-  
+
   async getQueue(): Promise<any[]> {
     const client = await this.pool.connect();
-  
+
     try {
       this.logger.debug('🔍 Fetching queue tickets from database');
-     
+
       const result = await client.query(`
         SELECT 
           id,
@@ -371,15 +370,17 @@ export class WhatsAppService {
       `);
 
       this.logger.debug(`📊 Found ${result.rows.length} waiting tickets`);
-    
-      return result.rows.map(ticket => ({
+
+      return result.rows.map((ticket) => ({
         ...ticket,
         customer_name: ticket.customer_name || 'Guest Customer', // Fallback for missing names
         service_type: ticket.service_type || 'General Service', // Fallback for missing service types
-        ticket_number: ticket.ticket_number || `T${ticket.id.slice(-6)}` // Fallback for missing ticket numbers
+        ticket_number: ticket.ticket_number || `T${ticket.id.slice(-6)}`, // Fallback for missing ticket numbers
       }));
     } catch (error) {
-      this.logger.error(`❌ Database error in getQueueTickets: ${error.message}`);
+      this.logger.error(
+        `❌ Database error in getQueueTickets: ${error.message}`,
+      );
       throw error;
     } finally {
       client.release();

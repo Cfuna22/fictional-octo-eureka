@@ -152,7 +152,7 @@ import { WhatsAppService } from './whatsapp.service';
 export class WhatsAppController {
   private readonly logger = new Logger(WhatsAppService.name);
 
-  constructor(private readonly queueService: WhatsAppService) { }
+  constructor(private readonly queueService: WhatsAppService) {}
 
   @Post('join')
   async joinQueue(@Body() body: { phone?: string; name?: string }) {
@@ -184,22 +184,25 @@ export class WhatsAppController {
 
   //@Get()
   //async getQueue() {
-    //this.logger.debug(`➡️ Fetching current queue`);
-    //const result = await this.queueService.getQueue();
-    //this.logger.debug(`✅ Queue fetched: ${result.length} people in queue`);
-    //return result;
+  //this.logger.debug(`➡️ Fetching current queue`);
+  //const result = await this.queueService.getQueue();
+  //this.logger.debug(`✅ Queue fetched: ${result.length} people in queue`);
+  //return result;
   //}
-  
+
   @Get()
   async getQueue() {
     this.logger.debug('➡️ Fetching current queue');
-    
+
     try {
       const tickets = await this.queueService.getQueue();
       this.logger.debug(`✅ Queue fetched: ${tickets.length} tickets`);
       return tickets;
     } catch (error) {
-      this.logger.error(`❌ Failed to fetch queue: ${error.message}`, error.stack);
+      this.logger.error(
+        `❌ Failed to fetch queue: ${error.message}`,
+        error.stack,
+      );
       throw new InternalServerErrorException('Failed to fetch queue data');
     }
   }
@@ -233,7 +236,10 @@ export class WhatsAppController {
 
     await this.queueService.completeService(normalizedPhone);
 
-    return { message: 'Service completed successfully', phone: normalizedPhone };
+    return {
+      message: 'Service completed successfully',
+      phone: normalizedPhone,
+    };
   }
 
   // Remove the USSD callback method since you have a separate module for that

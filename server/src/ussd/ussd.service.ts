@@ -1010,33 +1010,33 @@ Reason: ${result.reason}`;
   }
 
   async callNextTicket(
-  agentId: string,
-  serviceType?: string,
-): Promise<CallNextTicketResponseDto> {
-  const client = await this.pool.connect();
+    agentId: string,
+    serviceType?: string,
+  ): Promise<CallNextTicketResponseDto> {
+    const client = await this.pool.connect();
 
-  try {
-    this.logger.debug(
-      `🔔 Calling next ticket for agent: ${agentId}, service: ${serviceType}`,
-    );
+    try {
+      this.logger.debug(
+        `🔔 Calling next ticket for agent: ${agentId}, service: ${serviceType}`,
+      );
 
-    // Start transaction
-    await client.query('BEGIN');
+      // Start transaction
+      await client.query('BEGIN');
 
-    // 1. Find the agent
-    const agentResult = await client.query(
-      'SELECT * FROM service_agents WHERE id = $1',
-      [agentId],
-    );
+      // 1. Find the agent
+      const agentResult = await client.query(
+        'SELECT * FROM service_agents WHERE id = $1',
+        [agentId],
+      );
 
-    if (agentResult.rows.length === 0) {
-      throw new HttpException('Agent not found', HttpStatus.NOT_FOUND);
-    }
+      if (agentResult.rows.length === 0) {
+        throw new HttpException('Agent not found', HttpStatus.NOT_FOUND);
+      }
 
-    const agent = agentResult.rows[0];
+      const agent = agentResult.rows[0];
 
-    // 2. Build query for next ticket - handle NULL service_type for "General Service"
-    let nextTicketQuery = `
+      // 2. Build query for next ticket - handle NULL service_type for "General Service"
+      let nextTicketQuery = `
       SELECT 
         id,
         phone,
@@ -1052,58 +1052,58 @@ Reason: ${result.reason}`;
       WHERE status = 'waiting'
     `;
 
-    const queryParams: any[] = [];
-    
-    console.log('🔍 DEBUG - Service type from frontend:', serviceType);
+      const queryParams: any[] = [];
 
-    if (serviceType && serviceType !== 'Unknown Service') {
-      console.log('🔍 DEBUG - Filtering by service type:', serviceType);
+      console.log('🔍 DEBUG - Service type from frontend:', serviceType);
+
       if (serviceType && serviceType !== 'Unknown Service') {
         console.log('🔍 DEBUG - Filtering by service type:', serviceType);
-        queryParams.push(serviceType);
-        nextTicketQuery += ` AND service_type = $${queryParams.length}`;
-      } else {
-        queryParams.push(serviceType);
-        nextTicketQuery += ` AND service_type = $${queryParams.length}`;
+        if (serviceType && serviceType !== 'Unknown Service') {
+          console.log('🔍 DEBUG - Filtering by service type:', serviceType);
+          queryParams.push(serviceType);
+          nextTicketQuery += ` AND service_type = $${queryParams.length}`;
+        } else {
+          queryParams.push(serviceType);
+          nextTicketQuery += ` AND service_type = $${queryParams.length}`;
+        }
       }
-    }
 
-    nextTicketQuery += ` ORDER BY created_at ASC LIMIT 1`;
-    
-    console.log('🔍 DEBUG - Final query:', nextTicketQuery);
-    console.log('🔍 DEBUG - Query params:', queryParams);
+      nextTicketQuery += ` ORDER BY created_at ASC LIMIT 1`;
 
-    const nextTicketResult = await client.query(nextTicketQuery, queryParams);
-    console.log('🔍 DEBUG - Found tickets:', nextTicketResult.rows.length);
-    console.log('🔍 DEBUG - Ticket details:', nextTicketResult.rows);
-    const nextTicket = nextTicketResult.rows[0];
+      console.log('🔍 DEBUG - Final query:', nextTicketQuery);
+      console.log('🔍 DEBUG - Query params:', queryParams);
 
-    if (!nextTicket) {
-      // No next ticket available - set agent to available and clear current ticket
-      if (agent.current_ticket) {
-        await client.query(
-          `UPDATE service_agents 
+      const nextTicketResult = await client.query(nextTicketQuery, queryParams);
+      console.log('🔍 DEBUG - Found tickets:', nextTicketResult.rows.length);
+      console.log('🔍 DEBUG - Ticket details:', nextTicketResult.rows);
+      const nextTicket = nextTicketResult.rows[0];
+
+      if (!nextTicket) {
+        // No next ticket available - set agent to available and clear current ticket
+        if (agent.current_ticket) {
+          await client.query(
+            `UPDATE service_agents 
            SET current_ticket = NULL, 
                status = 'available'
            WHERE id = $1`,
-          [agentId],
-        );
-      }
-      
-      await client.query('COMMIT');
-      return {
-        currentTicket: null,
-        nextTicket: null,
-        message: `No waiting tickets${serviceType ? ` for ${serviceType}` : ''}`,
-      };
-    }
+            [agentId],
+          );
+        }
 
-    // 3. Complete current ticket if agent has one (BEFORE calling next)
-    let completedTicket: any = null;
-    if (agent.current_ticket) {
-      // Get the current ticket details before completing it
-      const currentTicketResult = await client.query(
-        `SELECT 
+        await client.query('COMMIT');
+        return {
+          currentTicket: null,
+          nextTicket: null,
+          message: `No waiting tickets${serviceType ? ` for ${serviceType}` : ''}`,
+        };
+      }
+
+      // 3. Complete current ticket if agent has one (BEFORE calling next)
+      let completedTicket: any = null;
+      if (agent.current_ticket) {
+        // Get the current ticket details before completing it
+        const currentTicketResult = await client.query(
+          `SELECT 
           id,
           phone,
           name as customer_name,
@@ -1113,35 +1113,35 @@ Reason: ${result.reason}`;
           created_at
          FROM queue 
          WHERE ticket_number = $1 AND status = 'in_progress'`,
-        [agent.current_ticket],
-      );
-      
-      completedTicket = currentTicketResult.rows[0];
-      
-      // Mark current ticket as completed (without completed_at column)
-      await client.query(
-        `UPDATE queue 
+          [agent.current_ticket],
+        );
+
+        completedTicket = currentTicketResult.rows[0];
+
+        // Mark current ticket as completed (without completed_at column)
+        await client.query(
+          `UPDATE queue 
          SET status = 'completed'
          WHERE ticket_number = $1 AND status = 'in_progress'`,
-        [agent.current_ticket],
-      );
-      
-      this.logger.debug(
-        `✅ Completed current ticket: ${agent.current_ticket}`,
-      );
-    }
+          [agent.current_ticket],
+        );
 
-    // 4. Update the next ticket to in_progress (without called_at column)
-    await client.query(
-      `UPDATE queue 
+        this.logger.debug(
+          `✅ Completed current ticket: ${agent.current_ticket}`,
+        );
+      }
+
+      // 4. Update the next ticket to in_progress (without called_at column)
+      await client.query(
+        `UPDATE queue 
        SET status = 'in_progress'
        WHERE id = $1`,
-      [nextTicket.id],
-    );
+        [nextTicket.id],
+      );
 
-    // 5. Get the updated ticket with recalculated position
-    const updatedTicketResult = await client.query(
-      `SELECT 
+      // 5. Get the updated ticket with recalculated position
+      const updatedTicketResult = await client.query(
+        `SELECT 
         id,
         phone,
         name as customer_name,
@@ -1154,58 +1154,58 @@ Reason: ${result.reason}`;
         'normal' as priority
        FROM queue 
        WHERE id = $1`,
-      [nextTicket.id],
-    );
+        [nextTicket.id],
+      );
 
-    const updatedTicket = updatedTicketResult.rows[0];
+      const updatedTicket = updatedTicketResult.rows[0];
 
-    // 6. Update agent's current ticket and status
-    await client.query(
-      `UPDATE service_agents 
+      // 6. Update agent's current ticket and status
+      await client.query(
+        `UPDATE service_agents 
        SET current_ticket = $1, 
            status = 'busy', 
            total_served = COALESCE(total_served, 0) + 1 
        WHERE id = $2`,
-      [nextTicket.ticket_number, agentId],
-    );
+        [nextTicket.ticket_number, agentId],
+      );
 
-    await client.query('COMMIT');
+      await client.query('COMMIT');
 
-    this.logger.debug(
-      `✅ Successfully called ticket: ${updatedTicket.ticket_number} for ${updatedTicket.customer_name}`,
-    );
+      this.logger.debug(
+        `✅ Successfully called ticket: ${updatedTicket.ticket_number} for ${updatedTicket.customer_name}`,
+      );
 
-    // Create message based on whether a ticket was completed
-    let message: string;
-    if (completedTicket && completedTicket.ticket_number) {
-      message = `Completed ${completedTicket.ticket_number} and called ${updatedTicket.ticket_number} for ${updatedTicket.customer_name}`;
-    } else {
-      message = `Called ticket ${updatedTicket.ticket_number} for ${updatedTicket.customer_name}`;
+      // Create message based on whether a ticket was completed
+      let message: string;
+      if (completedTicket && completedTicket.ticket_number) {
+        message = `Completed ${completedTicket.ticket_number} and called ${updatedTicket.ticket_number} for ${updatedTicket.customer_name}`;
+      } else {
+        message = `Called ticket ${updatedTicket.ticket_number} for ${updatedTicket.customer_name}`;
+      }
+
+      return {
+        currentTicket: completedTicket,
+        nextTicket: updatedTicket,
+        message: message,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      this.logger.error(`❌ Error calling next ticket: ${error.message}`);
+      throw new HttpException(
+        'Failed to call next ticket',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    } finally {
+      client.release();
     }
-
-    return {
-      currentTicket: completedTicket,
-      nextTicket: updatedTicket,
-      message: message,
-    };
-  } catch (error) {
-    await client.query('ROLLBACK');
-    this.logger.error(`❌ Error calling next ticket: ${error.message}`);
-    throw new HttpException(
-      'Failed to call next ticket',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
-  } finally {
-    client.release();
   }
-}
   async getAgents(): Promise<ServiceAgent[]> {
-  const client = await this.pool.connect();
+    const client = await this.pool.connect();
 
-  try {
-    this.logger.debug('🔍 Fetching agents from database');
+    try {
+      this.logger.debug('🔍 Fetching agents from database');
 
-    const result = await client.query(`
+      const result = await client.query(`
       SELECT 
         id,
         name,
@@ -1219,24 +1219,24 @@ Reason: ${result.reason}`;
       ORDER BY name
     `);
 
-    this.logger.debug(`📊 Found ${result.rows.length} agents`);
+      this.logger.debug(`📊 Found ${result.rows.length} agents`);
 
-    // Map the database rows to ServiceAgent interface
-    return result.rows.map(agent => ({
-      id: agent.id,
-      name: agent.name,
-      status: agent.status,
-      efficiency: agent.efficiency,
-      totalServed: agent.totalServed,
-      skills: agent.skills || [],
-      currentTicket: agent.currentTicket,
-      created_at: agent.created_at
-    }));
-  } catch (error) {
-    this.logger.error(`❌ Database error in getAgents: ${error.message}`);
-    throw error;
-  } finally {
-    client.release();
+      // Map the database rows to ServiceAgent interface
+      return result.rows.map((agent) => ({
+        id: agent.id,
+        name: agent.name,
+        status: agent.status,
+        efficiency: agent.efficiency,
+        totalServed: agent.totalServed,
+        skills: agent.skills || [],
+        currentTicket: agent.currentTicket,
+        created_at: agent.created_at,
+      }));
+    } catch (error) {
+      this.logger.error(`❌ Database error in getAgents: ${error.message}`);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
-}
 }
