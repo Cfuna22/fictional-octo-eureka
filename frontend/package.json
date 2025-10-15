@@ -11,6 +11,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "vite": "^5.4.0",
     "@apollo/client": "^3.14.0",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
