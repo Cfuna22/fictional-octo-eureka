@@ -155,32 +155,32 @@ export class WhatsAppController {
   constructor(private readonly queueService: WhatsAppService) {}
 
   @Post('join')
-  async joinQueue(@Body() body: { phone?: string; name?: string }) {
-    const { phone, name } = body;
+async joinQueue(@Body() body: { phone?: string; name?: string; serviceType?: string }) {
+  const { phone, name, serviceType } = body;
 
-    if (!phone || !name) {
-      throw new BadRequestException('Phone and Name are required');
-    }
-
-    // Normalize phone for Twilio (+2347xxxxxxx format)
-    let normalizedPhone = phone.trim();
-    if (!normalizedPhone.startsWith('+')) {
-      normalizedPhone = `+${normalizedPhone}`;
-    }
-
-    this.logger.debug(
-      `➡️ joinQueue request: phone=${normalizedPhone}, name=${name}`,
-    );
-
-    try {
-      const response = await this.queueService.joinQueue(normalizedPhone, name);
-      this.logger.debug(`✅ Queue joined: ${JSON.stringify(response)}`);
-      return response;
-    } catch (err) {
-      this.logger.error(`❌ joinQueue failed: ${err.message}`, err.stack);
-      throw err;
-    }
+  if (!phone || !name) {
+    throw new BadRequestException('Phone and Name are required');
   }
+
+  // Normalize phone for Twilio (+2347xxxxxxx format)
+  let normalizedPhone = phone.trim();
+  if (!normalizedPhone.startsWith('+')) {
+    normalizedPhone = `+${normalizedPhone}`;
+  }
+
+  this.logger.debug(
+    `➡️ joinQueue request: phone=${normalizedPhone}, name=${name}, serviceType=${serviceType}`,
+  );
+
+  try {
+    const response = await this.queueService.joinQueue(normalizedPhone, name, serviceType);
+    this.logger.debug(`✅ Queue joined: ${JSON.stringify(response)}`);
+    return response;
+  } catch (err) {
+    this.logger.error(`❌ joinQueue failed: ${err.message}`, err.stack);
+    throw err;
+  }
+}
 
   //@Get()
   //async getQueue() {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ResponsiveDashboardLayout } from '@/components/ResponsiveDashboardLayout';
 import { ResponsiveContainer, ResponsiveCardGrid } from '@/components/ResponsiveGrid';
 import { KioskStatusCard } from '@/components/KioskStatusCard';
@@ -12,7 +12,7 @@ import { gql, useQuery } from '@apollo/client';
 import { motion } from "framer-motion";
 import { WifiOff } from "lucide-react";
 
-// ✅ Supabase GraphQL query (Relay-style)
+// ✅ Fixed Supabase GraphQL query (Relay-style)
 const GET_DASHBOARD_DATA = gql`
   query GetDashboardData {
     kiosksCollection {
@@ -26,17 +26,19 @@ const GET_DASHBOARD_DATA = gql`
           metrics
           active_queue
           total_processed
+          service_type  # Added this field
         }
       }
     }
-    ticketsCollection {
+    queueCollection {  # Changed from ticketsCollection to queueCollection
       edges {
         node {
           id
-          customer_name
+          name  # Changed from customer_name
           service_type
           status
-          estimated_wait_time
+          phone
+          ticket_number
           created_at
         }
       }
@@ -46,22 +48,25 @@ const GET_DASHBOARD_DATA = gql`
         node {
           id
           name
-          specialization
           status
+          current_ticket  # Changed from specialization
+          total_served    # Changed from efficiency
+          skills          # Added skills field
         }
       }
     }
-    health_eventsCollection {
-      edges {
-        node {
-          id
-          event_type
-          description
-          severity
-          detected_at
-        }
-      }
-    }
+    # Commented out health_eventsCollection since it might not exist
+    # health_eventsCollection {
+    #   edges {
+    #     node {
+    #       id
+    #       event_type
+    #       description
+    #       severity
+    #       detected_at
+    #     }
+    #   }
+    # }
   }
 `;
 
@@ -72,6 +77,16 @@ const Dashboard = () => {
   const { data, loading, error, refetch } = useQuery(GET_DASHBOARD_DATA, {
     fetchPolicy: 'network-only', // always get fresh data
   });
+
+  // Add debug logging to see what data we're getting
+  useEffect(() => {
+    if (data) {
+      console.log('📊 GraphQL Data Received:', data);
+      console.log('🖥️ Kiosks:', data?.kiosksCollection?.edges.map((e: any) => e.node));
+      console.log('🎫 Queue Tickets:', data?.queueCollection?.edges.map((e: any) => e.node));
+      console.log('👤 Agents:', data?.service_agentsCollection?.edges.map((e: any) => e.node));
+    }
+  }, [data]);
 
   if (loading)
   return (
@@ -90,24 +105,38 @@ const Dashboard = () => {
       </motion.p>
     </div>
   );
-  if (error)
-  return (
-    <div className="flex flex-col items-center justify-center h-[80vh] text-center">
-      <WifiOff className="w-16 h-16 text-red-500 mb-4" />
-      <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-        Connection Error
-      </h2>
-      <p className="mt-2 text-gray-500 dark:text-gray-400">
-        Please check your internet connection and try again.
-      </p>
-    </div>
-  );
+  
+  if (error) {
+    console.error('❌ GraphQL Error:', error);
+    return (
+      <div className="flex flex-col items-center justify-center h-[80vh] text-center">
+        <WifiOff className="w-16 h-16 text-red-500 mb-4" />
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+          Connection Error
+        </h2>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">
+          {error.message || 'Failed to load dashboard data'}
+        </p>
+        <Button onClick={() => refetch()} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
-  // ✅ Unwrap Relay-style edges → node
+  // ✅ Unwrap Relay-style edges → node with proper table names
   const kiosks = data?.kiosksCollection?.edges.map((e: any) => e.node) ?? [];
-  const tickets = data?.ticketsCollection?.edges.map((e: any) => e.node) ?? [];
+  const tickets = data?.queueCollection?.edges.map((e: any) => e.node) ?? []; // Fixed: queueCollection instead of ticketsCollection
   const agents = data?.service_agentsCollection?.edges.map((e: any) => e.node) ?? [];
-  const healthEvents = data?.health_eventsCollection?.edges.map((e: any) => e.node) ?? [];
+  const healthEvents = []; // Empty array since we commented out health_eventsCollection
+
+  // Debug: Check if we have kiosk data
+  console.log('🔍 Processed Data:', {
+    kiosksCount: kiosks.length,
+    ticketsCount: tickets.length, 
+    agentsCount: agents.length,
+    kiosksSample: kiosks[0]
+  });
 
   const handleRefresh = () => {
     setLastRefresh(new Date());

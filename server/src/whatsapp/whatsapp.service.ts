@@ -57,12 +57,27 @@ export class WhatsAppService implements OnModuleInit {
     }
   }
 
-  async joinQueue(phone: string, name: string) {
-    this.logger.debug(`🔍 joinQueue called: ${name}, ${phone}`);
+  async joinQueue(phone: string, name: string, serviceType?: string) {
+    this.logger.debug(`🔍 joinQueue called: ${name}, ${phone}, service: ${serviceType}`);
     
     let client;
     try {
       client = await this.pool.connect();
+
+      // Get the kiosk for this service type
+      let kioskId = null;
+      if (serviceType) {
+        const kioskResult = await client.query(
+          `SELECT id FROM kiosks WHERE service_type = $1 LIMIT 1`,
+          [serviceType]
+        );
+        if (kioskResult.rows.length > 0) {
+          kioskId = kioskResult.rows[0].id;
+          this.logger.debug(`📱 Assigned to kiosk: ${kioskId} for service: ${serviceType}`);
+        } else {
+          this.logger.warn(`⚠️ No kiosk found for service type: ${serviceType}`);
+        }
+      }
 
       // Check if user already exists
       const existingUser = await client.query(
@@ -72,26 +87,47 @@ export class WhatsAppService implements OnModuleInit {
 
       this.logger.debug(`📊 Existing user check: ${existingUser.rowCount} records found`);
 
-      // Insert into queue
+      // Insert into queue with service type and kiosk_id
       const result = await client.query(
-        `INSERT INTO queue (phone, name, status) VALUES ($1, $2, 'waiting') RETURNING id, created_at`,
-        [phone, name],
+        `INSERT INTO queue (phone, name, status, service_type, kiosk_id) VALUES ($1, $2, 'waiting', $3, $4) RETURNING id, created_at`,
+        [phone, name, serviceType || null, kioskId],
       );
 
       const { id, created_at } = result.rows[0];
-      this.logger.debug(`✅ User inserted with ID: ${id}`);
+      this.logger.debug(`✅ User inserted with ID: ${id}, service: ${serviceType}, kiosk: ${kioskId}`);
 
-      // Calculate position
-      const posResult = await client.query(
-        `SELECT COUNT(*) FROM queue WHERE status='waiting' AND created_at <= $1`,
-        [created_at],
-      );
+      // Update kiosk active queue count if kiosk is assigned
+      if (kioskId) {
+        await client.query(
+          `UPDATE kiosks 
+           SET active_queue = active_queue + 1, 
+               updated_at = NOW() 
+           WHERE id = $1`,
+          [kioskId],
+        );
+        this.logger.debug(`📈 Updated kiosk ${kioskId} active queue count`);
+      }
+
+      // Calculate position for this specific service type
+      let positionQuery = `
+        SELECT COUNT(*) FROM queue 
+        WHERE status='waiting' AND created_at <= $1
+      `;
+      const positionParams = [created_at];
+      
+      if (serviceType) {
+        positionQuery += ` AND (service_type = $2 OR service_type IS NULL)`;
+        positionParams.push(serviceType);
+      }
+
+      const posResult = await client.query(positionQuery, positionParams);
       const position = parseInt(posResult.rows[0].count, 10);
-      this.logger.debug(`📊 Queue position calculated: ${position}`);
+      this.logger.debug(`📊 Queue position calculated: ${position} for service: ${serviceType}`);
 
-      // Prepare messages
+      // Prepare messages with service type information
+      const serviceInfo = serviceType ? ` for ${serviceType}` : '';
       const welcomeMsg = `👋 Hi ${name}! Welcome to our Queue Service. You'll get updates here on WhatsApp.`;
-      const queueMsg = `✅ Hi ${name}, you joined the queue! Your position is ${position}`;
+      const queueMsg = `✅ Hi ${name}, you joined the queue${serviceInfo}! Your position is ${position}`;
 
       // Send WhatsApp messages if Twilio is configured
       if (this.twilioClient && this.twilioWhatsAppNumber) {
@@ -127,7 +163,9 @@ export class WhatsAppService implements OnModuleInit {
         id, 
         position, 
         newUser: existingUser.rowCount === 0,
-        whatsappSent: !!(this.twilioClient && this.twilioWhatsAppNumber)
+        whatsappSent: !!(this.twilioClient && this.twilioWhatsAppNumber),
+        serviceType: serviceType || 'General Service',
+        kioskId: kioskId
       };
 
     } catch (error) {

@@ -10,6 +10,9 @@ export interface JoinQueueResponse {
   id: string;
   position: number;
   newUser: boolean;
+  whatsappSent: boolean;
+  serviceType?: string;
+  kioskId?: string;
 }
 
 export interface QueuePosition {

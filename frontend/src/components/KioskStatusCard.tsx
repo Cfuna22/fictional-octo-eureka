@@ -14,11 +14,22 @@ import {
 } from 'lucide-react';
 
 interface KioskStatusCardProps {
-  kiosk: Kiosk;
+  kiosk: any; // Changed from Kiosk to any to handle backend data structure
 }
 
 export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
-  const getStatusColor = (status: Kiosk['status']) => {
+  // Safely access properties with fallbacks
+  const status = kiosk.status || 'unknown';
+  const metrics = kiosk.metrics || {};
+  const cpu = metrics.cpu || 0;
+  const memory = metrics.memory || 0;
+  const diskSpace = metrics.diskSpace || 0;
+  const networkLatency = metrics.networkLatency || 0;
+  const activeQueue = kiosk.active_queue || kiosk.activeQueue || 0;
+  const totalProcessed = kiosk.total_processed || kiosk.totalProcessed || 0;
+  const lastHeartbeat = kiosk.last_heartbeat || kiosk.lastHeartbeat;
+
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy': return 'bg-gradient-success';
       case 'warning': return 'bg-warning';
@@ -28,7 +39,7 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
     }
   };
 
-  const getStatusIcon = (status: Kiosk['status']) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
       case 'healthy': return <CheckCircle2 className="w-5 h-5" />;
       case 'warning': return <AlertTriangle className="w-5 h-5" />;
@@ -39,12 +50,18 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
   };
 
   const getLastHeartbeatText = (timestamp: string) => {
-    const diff = Date.now() - new Date(timestamp).getTime();
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ${minutes % 60}m ago`;
+    if (!timestamp) return 'Unknown';
+    
+    try {
+      const diff = Date.now() - new Date(timestamp).getTime();
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return 'Just now';
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      return `${hours}h ${minutes % 60}m ago`;
+    } catch (error) {
+      return 'Unknown';
+    }
   };
 
   return (
@@ -57,10 +74,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
               {kiosk.name}
             </CardTitle>
             <Badge 
-              className={`${getStatusColor(kiosk.status)} text-white font-medium flex items-center gap-1 text-xs`}
+              className={`${getStatusColor(status)} text-white font-medium flex items-center gap-1 text-xs`}
             >
-              {getStatusIcon(kiosk.status)}
-              <span className="hidden sm:inline">{kiosk.status.toUpperCase()}</span>
+              {getStatusIcon(status)}
+              <span className="hidden sm:inline">{status.toUpperCase()}</span>
             </Badge>
           </div>
           <p className="text-xs text-muted-foreground truncate">{kiosk.location}</p>
@@ -72,11 +89,11 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Queue: {kiosk.activeQueue}</span>
+                <span className="text-sm font-medium">Queue: {activeQueue}</span>
               </div>
-              <span className="text-xs text-muted-foreground">Served: {kiosk.totalProcessed}</span>
+              <span className="text-xs text-muted-foreground">Served: {totalProcessed}</span>
             </div>
-            {kiosk.status === 'critical' && (
+            {status === 'critical' && (
               <button className="w-full bg-destructive text-white py-2 px-3 rounded text-xs font-medium">
                 Emergency Override
               </button>
@@ -91,16 +108,20 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
             </summary>
             <div className="mt-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span>CPU: {kiosk.metrics.cpu}%</span>
-                <Progress value={kiosk.metrics.cpu} className="h-1 w-16" />
+                <span>CPU: {cpu}%</span>
+                <Progress value={cpu} className="h-1 w-16" />
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span>Memory: {kiosk.metrics.memory}%</span>
-                <Progress value={kiosk.metrics.memory} className="h-1 w-16" />
+                <span>Memory: {memory}%</span>
+                <Progress value={memory} className="h-1 w-16" />
               </div>
               <div className="flex items-center justify-between text-xs">
-                <span>Latency: {kiosk.metrics.networkLatency}ms</span>
-                <Progress value={Math.max(0, 100 - (kiosk.metrics.networkLatency / 10))} className="h-1 w-16" />
+                <span>Storage: {diskSpace}%</span>
+                <Progress value={diskSpace} className="h-1 w-16" />
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span>Latency: {networkLatency}ms</span>
+                <Progress value={Math.max(0, 100 - (networkLatency / 10))} className="h-1 w-16" />
               </div>
             </div>
           </details>
@@ -109,10 +130,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              <span>{getLastHeartbeatText(kiosk.lastHeartbeat)}</span>
+              <span>{getLastHeartbeatText(lastHeartbeat)}</span>
             </div>
-            {kiosk.status === 'healthy' && (
-              <div className="w-2 h-2 bg-success rounded-full animate-pulse-soft"></div>
+            {status === 'healthy' && (
+              <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
             )}
           </div>
         </CardContent>
@@ -126,10 +147,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
               {kiosk.name}
             </CardTitle>
             <Badge 
-              className={`${getStatusColor(kiosk.status)} text-white font-medium flex items-center gap-1`}
+              className={`${getStatusColor(status)} text-white font-medium flex items-center gap-1`}
             >
-              {getStatusIcon(kiosk.status)}
-              {kiosk.status.toUpperCase()}
+              {getStatusIcon(status)}
+              {status.toUpperCase()}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">{kiosk.location}</p>
@@ -141,17 +162,17 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Cpu className="w-4 h-4 text-primary shrink-0" />
-                <span>CPU: {kiosk.metrics.cpu}%</span>
+                <span>CPU: {cpu}%</span>
               </div>
-              <Progress value={kiosk.metrics.cpu} className="h-2" />
+              <Progress value={cpu} className="h-2" />
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <HardDrive className="w-4 h-4 text-primary shrink-0" />
-                <span>Memory: {kiosk.metrics.memory}%</span>
+                <span>Memory: {memory}%</span>
               </div>
-              <Progress value={kiosk.metrics.memory} className="h-2" />
+              <Progress value={memory} className="h-2" />
             </div>
           </div>
 
@@ -159,10 +180,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
           <div className="flex justify-between items-center pt-2 border-t border-border">
             <div className="flex items-center gap-2 text-sm">
               <Users className="w-4 h-4 text-primary shrink-0" />
-              <span>Queue: {kiosk.activeQueue}</span>
+              <span>Queue: {activeQueue}</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              Served: {kiosk.totalProcessed}
+              Served: {totalProcessed}
             </div>
           </div>
 
@@ -170,10 +191,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              <span>Last seen: {getLastHeartbeatText(kiosk.lastHeartbeat)}</span>
+              <span>Last seen: {getLastHeartbeatText(lastHeartbeat)}</span>
             </div>
-            {kiosk.status === 'healthy' && (
-              <div className="w-2 h-2 bg-success rounded-full animate-pulse-soft"></div>
+            {status === 'healthy' && (
+              <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
             )}
           </div>
         </CardContent>
@@ -187,10 +208,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
               {kiosk.name}
             </CardTitle>
             <Badge 
-              className={`${getStatusColor(kiosk.status)} text-white font-medium flex items-center gap-1`}
+              className={`${getStatusColor(status)} text-white font-medium flex items-center gap-1`}
             >
-              {getStatusIcon(kiosk.status)}
-              {kiosk.status.toUpperCase()}
+              {getStatusIcon(status)}
+              {status.toUpperCase()}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">{kiosk.location}</p>
@@ -202,34 +223,34 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Cpu className="w-4 h-4 text-primary shrink-0" />
-                <span>CPU: {kiosk.metrics.cpu}%</span>
+                <span>CPU: {cpu}%</span>
               </div>
-              <Progress value={kiosk.metrics.cpu} className="h-2" />
+              <Progress value={cpu} className="h-2" />
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <HardDrive className="w-4 h-4 text-primary shrink-0" />
-                <span>Memory: {kiosk.metrics.memory}%</span>
+                <span>Memory: {memory}%</span>
               </div>
-              <Progress value={kiosk.metrics.memory} className="h-2" />
+              <Progress value={memory} className="h-2" />
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <HardDrive className="w-4 h-4 text-primary shrink-0" />
-                <span>Storage: {kiosk.metrics.diskSpace}%</span>
+                <span>Storage: {diskSpace}%</span>
               </div>
-              <Progress value={kiosk.metrics.diskSpace} className="h-2" />
+              <Progress value={diskSpace} className="h-2" />
             </div>
             
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <Wifi className="w-4 h-4 text-primary shrink-0" />
-                <span>Latency: {kiosk.metrics.networkLatency}ms</span>
+                <span>Latency: {networkLatency}ms</span>
               </div>
               <Progress 
-                value={Math.max(0, 100 - (kiosk.metrics.networkLatency / 10))} 
+                value={Math.max(0, 100 - (networkLatency / 10))} 
                 className="h-2" 
               />
             </div>
@@ -239,10 +260,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
           <div className="flex justify-between items-center pt-2 border-t border-border">
             <div className="flex items-center gap-2 text-sm">
               <Users className="w-4 h-4 text-primary shrink-0" />
-              <span>Queue: {kiosk.activeQueue}</span>
+              <span>Queue: {activeQueue}</span>
             </div>
             <div className="text-sm text-muted-foreground">
-              Served: {kiosk.totalProcessed}
+              Served: {totalProcessed}
             </div>
           </div>
 
@@ -250,10 +271,10 @@ export function KioskStatusCard({ kiosk }: KioskStatusCardProps) {
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              <span>Last seen: {getLastHeartbeatText(kiosk.lastHeartbeat)}</span>
+              <span>Last seen: {getLastHeartbeatText(lastHeartbeat)}</span>
             </div>
-            {kiosk.status === 'healthy' && (
-              <div className="w-2 h-2 bg-success rounded-full animate-pulse-soft"></div>
+            {status === 'healthy' && (
+              <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
             )}
           </div>
 
