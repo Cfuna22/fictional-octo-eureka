@@ -241,6 +241,4 @@ export class WhatsAppController {
       phone: normalizedPhone,
     };
   }
-
-  // Remove the USSD callback method since you have a separate module for that
 }
