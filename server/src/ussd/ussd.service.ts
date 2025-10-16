@@ -39,6 +39,11 @@ export class UssdService {
     text: string,
     sessionId: string,
   ): Promise<string> {
+    this.logger.log('🎯 USSD REQUEST RECEIVED - Service is working!');
+    this.logger.log('Phone:', phoneNumber);
+    this.logger.log('Text:', text);
+    this.logger.log('SessionId:', sessionId);
+    this.logger.log('Timestamp:', new Date().toISOString());
     // Validate phone number format
     if (!this.isValidPhoneNumber(phoneNumber)) {
       this.logSecurityEvent('INVALID_PHONE', { phoneNumber });
