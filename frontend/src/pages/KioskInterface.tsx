@@ -20,7 +20,12 @@ import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { queueService } from "@/services/queueService";
 
-const KioskInterface = () => {
+interface KioskInterfaceProps {
+  hideHeader?: boolean; // optional prop to hide header
+}
+
+
+const KioskInterface: React.FC<KioskInterfaceProps> = ({ hideHeader = false }) => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<
     "welcome" | "service" | "details" | "ticket"
@@ -448,6 +453,7 @@ const KioskInterface = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation Header */}
+      {!hideHeader && (
       <header className="bg-gradient-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -473,7 +479,7 @@ const KioskInterface = () => {
           </Button>
         </div>
       </header>
-
+      )}
       {/* Main Kiosk Interface */}
       <div className="flex items-center justify-center p-8 min-h-[calc(100vh-100px)]">
         <div className="w-full max-w-2xl">
