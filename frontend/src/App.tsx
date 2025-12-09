@@ -13,6 +13,10 @@ import MobileTicketView from "./pages/MobileTicketView";
 import Subscription from "./pages/Subscription";
 import DigitalServices from "./pages/DigitalServices";
 import NotFound from "./pages/NotFound";
+import UserDashboard from "./pages/userDashboard.tsx";
+import UserProfile from "./pages/userProfile.tsx";
+import Settings from "./pages/settings";
+import UserSubscription from "./pages/userSubscription.tsx";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +37,13 @@ const App = () => (
           <Route path="/ai" element={<AIInsightsPanel />} />
           <Route path="/government-verification" element={<GovernmentMocks />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* Test route for your new page */}
+          <Route path="/userDashboard" element={<UserDashboard />} />
+          {/* other routes */}
+          <Route path="/userProfile" element={<UserProfile />} />
+          <Route path="/userSubscription" element={<UserSubscription/>}/>
+          
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
